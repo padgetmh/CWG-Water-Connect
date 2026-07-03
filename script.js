@@ -278,10 +278,10 @@
 (() => {
   console.log("timer.js loaded");
 
-  let timeLeft = 60;
+  let timeLeft = 0;
   let timerInterval = null;
   let isRunning = false;
-  let elapsedMode = false;
+  let elapsedMode = true;
 
   const timerDisplay = document.getElementById("timer");
 
@@ -306,11 +306,20 @@
     isRunning = false;
   }
 
-  function startTimer(duration = 60, countUp = false) {
+  function getActiveTimerPreset() {
+    const diff = window.currentDifficulty || "easy";
+    return getTimerPreset(diff);
+  }
+
+  function startTimer(duration, countUp) {
     stopTimer();
 
-    timeLeft = Math.max(0, duration);
-    elapsedMode = Boolean(countUp);
+    const preset = getActiveTimerPreset();
+    const resolvedDuration = typeof duration === "number" ? duration : preset.duration;
+    const resolvedCountUp = typeof countUp === "boolean" ? countUp : preset.countUp;
+
+    timeLeft = Math.max(0, resolvedDuration);
+    elapsedMode = resolvedCountUp;
     isRunning = true;
 
     updateDisplay();
@@ -359,9 +368,9 @@
     isRunning = true;
   }
 
-  function resetTimer(duration = 60) {
+  function resetTimer(duration, countUp) {
     stopTimer();
-    startTimer(duration);
+    startTimer(duration, countUp);
   }
 
   function addTime(seconds) {
@@ -678,8 +687,6 @@ const NORMAL_MOVE_LIMIT = 13;
 const HARD_MOVE_GRACE = 25;
 const HARD_OVERMOVE_POINT_PENALTY = 3;
 const BANNER_HIDE_MS = 5000;
-const VALIDATE_ALL_PIPES = false;
-const REQUIRE_FULL_NETWORK = false;
 const ALLOW_COMPLEX_PIPES = false;
 
 const TOTAL_PIPES = GRID_SIZE * GRID_SIZE;
@@ -1710,53 +1717,6 @@ function validateAllConnections() {
     return { valid: false, reason: "Source or destination is contaminated." };
   }
 
-  const cleanPipeIndexes = [];
-  for (let index = 0; index < TOTAL_PIPES; index += 1) {
-    if (!contaminatedPipes.includes(index)) {
-      cleanPipeIndexes.push(index);
-    }
-  }
-
-  if (VALIDATE_ALL_PIPES) {
-    for (const index of cleanPipeIndexes) {
-      const openings = getOpenings(index);
-
-      for (const direction of openings) {
-        const boundaryOpen = isDirectionOutOfBounds(index, direction);
-
-        if (boundaryOpen) {
-          const isSourceOutlet = index === START_PIPE && direction === "left";
-          const isVillageOutlet = index === END_PIPE && direction === "right";
-
-          if (!isSourceOutlet && !isVillageOutlet) {
-            logInvalidConnection(index, direction, "It points outside the board.");
-            return { valid: false, reason: "A pipe points outside the board." };
-          }
-
-          continue;
-        }
-
-        const neighbor = getNeighborForDirection(index, direction);
-        if (neighbor === null || neighbor < 0 || neighbor >= TOTAL_PIPES) {
-          logInvalidConnection(index, direction, "It points to an invalid board location.");
-          return { valid: false, reason: "A pipe points to an invalid location." };
-        }
-
-        if (contaminatedPipes.includes(neighbor)) {
-          logInvalidConnection(index, direction, "is contaminated and cannot accept clean water.", neighbor);
-          return { valid: false, reason: "A clean pipe points into a contaminated branch." };
-        }
-
-        const opposite = oppositeDirection[direction];
-        const neighborOpenings = getOpenings(neighbor);
-        if (!neighborOpenings.includes(opposite)) {
-          logInvalidConnection(index, direction, `is missing ${opposite.toUpperCase()} on the neighboring pipe.`, neighbor);
-          return { valid: false, reason: "A pipe connection is open and leaking." };
-        }
-      }
-    }
-  }
-
   const startOpenings = getOpenings(START_PIPE);
   if (!startOpenings.includes("left")) {
     logInvalidConnection(START_PIPE, "left", "Source pipe must remain open to the water source.");
@@ -1779,8 +1739,7 @@ function validateAllConnections() {
         const isVillageOutlet = index === END_PIPE && direction === "right";
 
         if (!isSourceOutlet && !isVillageOutlet) {
-          logInvalidConnection(index, direction, "It points outside the board.");
-          return { valid: false, reason: "A pipe is leaking off the map." };
+          continue;
         }
 
         continue;
@@ -1788,20 +1747,17 @@ function validateAllConnections() {
 
       const neighbor = getNeighborForDirection(index, direction);
       if (neighbor === null || neighbor < 0 || neighbor >= TOTAL_PIPES) {
-        logInvalidConnection(index, direction, "It points to an invalid board location.");
-        return { valid: false, reason: "A pipe points to an invalid location." };
+        continue;
       }
 
       if (contaminatedPipes.includes(neighbor)) {
-        logInvalidConnection(index, direction, "is contaminated and cannot accept clean water.", neighbor);
-        return { valid: false, reason: "Clean water is connected to a contaminated pipe." };
+        continue;
       }
 
       const opposite = oppositeDirection[direction];
       const neighborOpenings = getOpenings(neighbor);
       if (!neighborOpenings.includes(opposite)) {
-        logInvalidConnection(index, direction, `does not have a ${opposite.toUpperCase()} connection.`, neighbor);
-        return { valid: false, reason: "A pipe connection is open and leaking." };
+        continue;
       }
 
       if (!visited.has(neighbor)) {
@@ -1814,16 +1770,6 @@ function validateAllConnections() {
 
   if (!visited.has(END_PIPE)) {
     return { valid: false, reason: "Water has not reached the village." };
-  }
-
-  if (REQUIRE_FULL_NETWORK && visited.size !== cleanPipeIndexes.length) {
-    const firstUnreached = cleanPipeIndexes.find((index) => !visited.has(index));
-    if (typeof firstUnreached === "number") {
-      const coord = getPipeCoordinate(firstUnreached);
-      console.log(`Unreached clean pipe at (${coord.x},${coord.y}).`);
-    }
-
-    return { valid: false, reason: "Not all clean pipes are connected to the water source." };
   }
 
   const endOpenings = getOpenings(END_PIPE);
@@ -1844,49 +1790,11 @@ function validateAllConnections() {
 
   return {
     valid: true,
+    reachedGoal: true,
     visited: Array.from(visited),
-    pathCells: Array.from(visited),
+    pathCells: pathToDestination,
     path: pathToDestination
   };
-}
-
-function hasOpenEnds(pathCells) {
-  const opposite = {
-    top: "bottom",
-    bottom: "top",
-    left: "right",
-    right: "left"
-  };
-
-  for (const key of pathCells) {
-    const pipe = pipes[key];
-
-    if (!pipe) continue;
-
-    const openings = getOpenings(key);
-
-    for (const dir of openings) {
-      const neighbor = getNeighborForDirection(key, dir);
-
-      if (neighbor === null || neighbor < 0 || neighbor >= TOTAL_PIPES) {
-        return true;
-      }
-
-      const neighborPipe = pipes[neighbor];
-
-      if (!neighborPipe) {
-        return true;
-      }
-
-      const neighborOpenings = getOpenings(neighbor);
-
-      if (!neighborOpenings.includes(opposite[dir])) {
-        return true;
-      }
-    }
-  }
-
-  return false;
 }
 
 function evaluatePath() {
@@ -1902,7 +1810,7 @@ function evaluatePath() {
     }
   });
 
-  if (result.valid && result.reachedGoal && !hasOpenEnds(result.pathCells)) {
+  if (result.valid && result.reachedGoal) {
     return { success: true, previewPath };
   }
 
@@ -2003,7 +1911,7 @@ function playerWins(path) {
   if (!gameStarted) return;
 
   const result = validateAllConnections();
-  if (!result.valid || !result.reachedGoal || hasOpenEnds(result.pathCells)) {
+  if (!result.valid || !result.reachedGoal) {
     console.log("There are leaking pipes.");
     return;
   }
