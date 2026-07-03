@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>Water Connect | Clean Water Puzzle</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Font -->
+
+    <link rel="preconnect"
+        href="https://fonts.googleapis.com">
+
+    <link rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+</head>
+
+<body>
+
+<!-- ===========================================
+HEADER
+=========================================== -->
+
+<header>
+
+    <div
+        class="logoArea"
+        id="logoToggle"
+        role="button"
+        tabindex="0"
+        aria-label="Toggle top navigation panels"
+        aria-expanded="true"
+        title="Hide or show top panels">
+
+        <img
+            src="images/charity-water-logo.png.png"
+            alt="Water Connect Logo"
+            class="logo">
+
+        <div class="brandText">
+
+            <h1>
+
+                Water Connect
+
+            </h1>
+
+            <p>
+
+                Presented by charity: water
+
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="headerButtons">
+
+        <button id="musicBtn" class="audio-toggle-btn">
+
+            <span class="audioBtnIcon" aria-hidden="true">🎵</span>
+
+            <span>Music</span>
+
+        </button>
+
+        <button id="soundBtn" class="audio-toggle-btn">
+
+            <span class="audioBtnIcon" aria-hidden="true">🔊</span>
+
+            <span>Sound</span>
+
+        </button>
+
+        <button
+            id="collapseHeaderBtn"
+            type="button"
+            aria-label="Collapse header panels"
+            title="Collapse header panels">
+
+            Collapse Header
+
+        </button>
+
+    </div>
+
+</header>
+
+<button
+    id="expandHeaderBtn"
+    class="expandHeaderBtn"
+    type="button"
+    aria-label="Expand header panels"
+    title="Expand header panels">
+
+    ⌄
+
+</button>
+
+<!-- ===========================================
+DIFFICULTY
+=========================================== -->
+
+<section id="difficultyPanel">
+
+    <button
+        id="difficultyModeBtn"
+        class="infoToggleBtn"
+        type="button"
+        aria-expanded="false"
+        aria-controls="difficultyMenu">
+
+        Difficulty Mode: Easy
+
+    </button>
+
+    <div id="difficultyMenu" class="hidden">
+
+    <div class="difficultyButtons">
+
+        <button
+            class="difficulty selected"
+            data-mode="easy">
+
+            <span class="difficultyMainLabel">
+
+                <img src="images/Easy.svg" alt="" aria-hidden="true" class="difficultyModeIcon">
+
+                <span>
+
+                    Easy
+
+                </span>
+
+            </span>
+
+            <small>
+
+                Timer Counts Up
+
+            </small>
+
+        </button>
+
+        <button
+            class="difficulty"
+            data-mode="normal">
+
+            <span class="difficultyMainLabel">
+
+                <img src="images/Normal.svg" alt="" aria-hidden="true" class="difficultyModeIcon">
+
+                <span>
+
+                    Normal
+
+                </span>
+
+            </span>
+
+            <small>
+
+                8 Minute Timer
+
+            </small>
+
+        </button>
+
+        <button
+            class="difficulty"
+            data-mode="hard">
+
+            <span class="difficultyMainLabel">
+
+                <img src="images/Hard.svg" alt="" aria-hidden="true" class="difficultyModeIcon">
+
+                <span>
+
+                    Hard
+
+                </span>
+
+            </span>
+
+            <small>
+
+                5 Minute Timer
+
+            </small>
+
+        </button>
+
+    </div>
+
+    <p id="difficultyDescription">
+
+        Easy mode tracks score and elapsed time, with no move counting.
+        Normal mode gives you eight minutes and a 13 move limit.
+        Hard mode gives you five minutes with 25 grace moves, then extra moves cost points.
+
+    </p>
+
+    </div>
+
+</section>
+
+<!-- ===========================================
+MISSION
+=========================================== -->
+
+<section id="mission">
+
+    <button class="infoTextBtn" type="button">
+
+    <h2>
+
+        Mission
+
+    </h2>
+
+    <p>
+
+        Millions of people still lack access to clean drinking water.
+        Rotate the pipes to create a complete path from the water source
+        to the village. Avoid contaminated pipes, collect bonus water
+        drops, and complete each level before time runs out.
+
+    </p>
+
+    </button>
+
+</section>                                                  <!-- ===========================================
+GAME CONTROLS
+=========================================== -->
+
+<!-- ===========================================
+CURRENT DIFFICULTY
+=========================================== -->
+
+<section id="currentDifficulty">
+
+    <button class="infoTextBtn" type="button">
+
+    <h3>
+
+        Current Difficulty
+
+    </h3>
+
+    <span id="difficultyLabel">
+
+        Easy
+
+    </span>
+
+    </button>
+
+</section>
+
+<!-- ===========================================
+MILESTONE MESSAGE
+=========================================== -->
+
+<section id="milestoneBox">
+
+    <button id="milestoneBtn" class="infoTextBtn" type="button">
+
+    <p id="milestoneMessage">
+
+        Welcome! Every completed pipeline helps bring clean water to another community.
+
+    </p>
+
+    </button>
+
+</section>
+
+<!-- ===========================================
+GAME MAP
+=========================================== -->
+
+<main id="gameMap">
+
+    <section id="topBar" class="hidden" aria-label="Game stats banner">
+
+        <button class="stat" type="button">
+
+            <h3>
+
+                Score
+
+            </h3>
+
+            <span id="score">
+
+                0
+
+            </span>
+
+        </button>
+
+        <button class="stat" type="button">
+
+            <h3>
+
+                Moves
+
+            </h3>
+
+            <span id="moves">
+
+                0
+
+            </span>
+
+        </button>
+
+        <button class="stat" type="button">
+
+            <h3>
+
+                Timer
+
+            </h3>
+
+            <span id="timer">
+
+                ∞
+
+            </span>
+
+        </button>
+
+        <button class="stat" type="button">
+
+            <h3>
+
+                Level
+
+            </h3>
+
+            <span id="level">
+
+                1
+
+            </span>
+
+        </button>
+
+        <button class="stat" type="button">
+
+            <h3>
+
+                Best Score
+
+            </h3>
+
+            <span id="highScore">
+
+                0
+
+            </span>
+
+        </button>
+
+    </section>
+
+    <!-- Background Illustration -->
+
+    <img
+
+        src="images/background.jpg.png"
+
+        class="map"
+
+        alt="Village Map"
+
+    >
+
+    <!-- ===========================
+         Water Source
+    =========================== -->
+
+    <img
+
+        src="images/water-level-svgrepo-com.svg.svg"
+
+        id="source"
+
+        class="source"
+
+        alt="Water Source"
+
+    >
+
+    <!-- ===========================
+         Destination Village
+    =========================== -->
+
+    <img
+
+        src="images/village-svgrepo-com-1.svg.svg"
+
+        id="village"
+
+        class="village"
+
+        alt="Village"
+
+    >
+
+    <!-- ===========================
+         Pipe Layer
+         JavaScript creates all pipes
+    =========================== -->
+
+    <div id="pipesLayer">
+
+    </div>
+
+    <!-- ===========================
+         Bonus Water Drops
+    =========================== -->
+
+    <div id="collectibles">
+
+    </div>
+
+    <!-- ===========================
+         Animated Water Overlay
+         (hidden until player wins)
+    =========================== -->
+
+    <div id="waterFlow">
+
+    </div>
+
+    <button id="mapInfoBtn" type="button" aria-expanded="false" aria-controls="mapInfoPanel">
+
+        ℹ Information
+
+    </button>
+
+    <section id="mapInfoPanel" class="hidden" aria-label="Game information">
+
+        <h3>
+
+            Goal
+
+        </h3>
+
+        <p>
+
+            Rotate every pipe until clean water reaches the village.
+
+        </p>
+
+        <h3>
+
+            Avoid
+
+        </h3>
+
+        <p>
+
+            Contaminated pipes reduce your score and block the flow.
+
+        </p>
+
+        <h3>
+
+            Bonus
+
+        </h3>
+
+        <p>
+
+            Collect floating water drops for extra points.
+
+        </p>
+
+        <h3>
+
+            Did You Know?
+
+        </h3>
+
+        <p id="factText">
+
+            Every completed puzzle represents bringing clean water to another community.
+
+        </p>
+
+        <h3>
+
+            Water Connect
+
+        </h3>
+
+        <p>
+
+            Inspired by the mission of charity: water to bring clean, safe drinking water to every person.
+
+        </p>
+
+        <button id="closeMapInfoBtn" type="button" class="secondary">
+
+            Close
+
+        </button>
+
+    </section>
+
+    <section id="mapControlDock" class="hidden" aria-label="In-game controls">
+
+        <div class="dockActions" aria-label="Game Actions">
+
+            <button id="pauseBtn" class="secondary" type="button" aria-label="Pause game" data-icon="⏸">
+
+                ⏸ Pause
+
+            </button>
+
+            <button id="playBtn" class="secondary hidden" type="button" aria-label="Resume game" data-icon="▶">
+
+                ▶ Play
+
+            </button>
+
+            <button id="doneBtn" aria-label="Done">
+
+                <img src="images/Done.svg" alt="" aria-hidden="true" class="dockActionIcon doneActionIcon">
+
+                <span class="dockActionLabel">
+
+                    Done
+
+                </span>
+
+            </button>
+
+            <button id="resetBtn" aria-label="Reset" data-icon="↻">
+
+                ↻ Reset Game
+
+            </button>
+
+        </div>
+
+        <div class="dockDifficulty" aria-label="Difficulty Mode">
+
+            <button
+                class="difficulty difficulty-dock-btn selected"
+                data-mode="easy"
+                aria-label="Easy"
+                data-icon="🟢">
+
+                <img src="images/Easy.svg" alt="" aria-hidden="true" class="difficultyModeIcon dockEasyIcon">
+
+                <span class="difficultyDockLabel">
+
+                    Easy
+
+                </span>
+
+            </button>
+
+            <button
+                class="difficulty difficulty-dock-btn"
+                data-mode="normal"
+                aria-label="Normal"
+                data-icon="🟡">
+
+                <img src="images/Normal.svg" alt="" aria-hidden="true" class="difficultyModeIcon dockNormalIcon">
+
+                <span class="difficultyDockLabel">
+
+                    Normal
+
+                </span>
+
+            </button>
+
+            <button
+                class="difficulty difficulty-dock-btn"
+                data-mode="hard"
+                aria-label="Hard"
+                data-icon="🔴">
+
+                <img src="images/Hard.svg" alt="" aria-hidden="true" class="difficultyModeIcon dockHardIcon">
+
+                <span class="difficultyDockLabel">
+
+                    Hard
+
+                </span>
+
+            </button>
+
+        </div>
+
+        <div class="dockAudio" aria-label="Audio Controls">
+
+            <button id="mapMusicBtn" class="secondary audio-toggle-btn" type="button">
+
+                <span class="audioBtnIcon" aria-hidden="true">🎵</span>
+
+                <span>Music</span>
+
+            </button>
+
+            <button id="mapSoundBtn" class="secondary audio-toggle-btn" type="button">
+
+                <span class="audioBtnIcon" aria-hidden="true">🔊</span>
+
+                <span>Sound</span>
+
+            </button>
+
+        </div>
+
+        <button id="mapMoreBtn" class="dockMoreBtn secondary" type="button" aria-label="Audio options" aria-expanded="false" data-icon="🔊">
+
+            Audio
+
+        </button>
+
+    </section>
+
+    <section id="introOverlay" class="overlay-card">
+
+        <p class="overlay-kicker">
+
+            Village Dispatch
+
+        </p>
+
+        <h2>
+
+            Build a Safe Water Route
+
+        </h2>
+
+        <p>
+
+            Rotate the pipes to connect source to village. Contaminated lines
+            cost points and block clean flow.
+
+        </p>
+
+        <button id="overlayStartBtn" type="button">
+
+            ▶ Start Game
+
+        </button>
+
+    </section>
+
+</main>
+
+<!-- ===========================================
+GAME CONTROLS
+=========================================== -->
+
+<!-- ===========================================
+STATUS BAR
+=========================================== -->
+
+<section id="statusBar" class="status-panel">
+
+    <p id="message">
+
+        Select a difficulty and press Start Game.
+
+    </p>
+
+</section>
+
+<!-- ===========================================
+WIN SCREEN
+=========================================== -->
+
+<section
+    id="winScreen"
+    class="hidden">
+
+    <div class="popup">
+
+        <h2>
+
+            🎉 Clean Water Delivered!
+
+        </h2>
+
+        <p>
+
+            Congratulations! You repaired the pipeline and delivered clean
+            water to the village.
+
+        </p>
+
+        <div class="stars">
+
+            <span id="star1">⭐</span>
+            <span id="star2">⭐</span>
+            <span id="star3">⭐</span>
+
+        </div>
+
+        <h3>
+
+            Final Score
+
+        </h3>
+
+        <p id="finalScore">
+
+            0
+
+        </p>
+
+        <h3>
+
+            Moves Used
+
+        </h3>
+
+        <p id="finalMoves">
+
+            0
+
+        </p>
+
+        <button id="nextLevel">
+
+            Next Level →
+
+        </button>
+
+    </div>
+
+</section>
+
+<!-- ===========================================
+LOSE SCREEN
+=========================================== -->
+
+<section
+    id="loseScreen"
+    class="hidden">
+
+    <div class="popup">
+
+        <h2>
+
+            ⏰ Time Ran Out
+
+        </h2>
+
+        <p>
+
+            The village still needs clean water.
+
+            Try again!
+
+        </p>
+
+        <button id="retryBtn">
+
+            Try Again
+
+        </button>
+
+    </div>
+
+</section>
+
+<section id="infoPopup" class="hidden">
+
+    <div class="popup">
+
+        <h2 id="infoTitle">
+
+            ⚠ Contaminated Pipe
+
+        </h2>
+
+        <p id="infoText">
+
+            This line carries unsafe water. Touching it costs extra moves and points.
+
+        </p>
+
+        <p id="infoMissionText">
+
+            Clean water changes health, school attendance, and daily life for communities.
+
+        </p>
+
+        <button id="closeInfoBtn">
+
+            Close
+
+        </button>
+
+    </div>
+
+</section>
+
+<section id="factPopup" class="hidden" aria-live="polite" aria-atomic="true">
+
+    <div class="popup fact-popup-card">
+
+        <h2>
+
+            Did You Know?
+
+        </h2>
+
+        <p id="factPopupText">
+
+            charity: water helps fund sustainable clean water projects for communities in need.
+
+        </p>
+
+    </div>
+
+</section>
+
+<!-- ===========================================
+FOOTER
+=========================================== -->
+
+<footer>
+
+    <div class="footerContainer">
+
+        <div>
+
+            <h2>
+
+                Water Connect
+
+            </h2>
+
+            <p>
+
+                Inspired by the mission of charity: water to bring clean,
+                safe drinking water to every person.
+
+            </p>
+
+        </div>
+
+        <div class="footerLinks">
+
+            <a
+                href="https://www.charitywater.org"
+                target="_blank">
+
+                charity: water
+
+            </a>
+
+            <a
+                href="https://www.charitywater.org/donate"
+                target="_blank">
+
+                Donate
+
+            </a>
+
+            <a
+                href="https://www.charitywater.org/our-work"
+                target="_blank">
+
+                Our Work
+
+            </a>
+
+            <a
+                href="https://www.charitywater.org/about"
+                target="_blank">
+
+                About
+
+            </a>
+
+        </div>
+
+    </div>
+
+    <p class="copyright">
+
+        © 2026 Water Connect
+
+        • Educational project inspired by charity: water.
+
+    </p>
+
+</footer>
+
+<!-- ===========================================
+AUDIO
+=========================================== -->
+
+<audio id="rotateSound">
+    <source src="sounds/rotate.mp3.wav" type="audio/wav">
+</audio>
+
+<audio id="buttonSound">
+    <source src="sounds/button.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="waterSound">
+    <source src="sounds/water.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="winSound">
+    <source src="sounds/win.mp3.wav" type="audio/wav">
+</audio>
+
+<audio id="loseSound">
+    <source src="sounds/lose.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="levelSound">
+    <source src="sounds/levelup.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="milestoneSound">
+    <source src="sounds/milestone.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="contaminationSound">
+    <source src="sounds/contamination.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="backgroundMusic" loop>
+    <source src="sounds/Game%20Backgound%20Music.wav" type="audio/wav">
+</audio>
+
+<!-- ===========================================
+JAVASCRIPT FILES
+=========================================== -->
+
+<script src="script.js"></script>
+
+</body>
+
+</html>
