@@ -1845,8 +1845,48 @@ function validateAllConnections() {
   return {
     valid: true,
     visited: Array.from(visited),
+    pathCells: Array.from(visited),
     path: pathToDestination
   };
+}
+
+function hasOpenEnds(pathCells) {
+  const opposite = {
+    top: "bottom",
+    bottom: "top",
+    left: "right",
+    right: "left"
+  };
+
+  for (const key of pathCells) {
+    const pipe = pipes[key];
+
+    if (!pipe) continue;
+
+    const openings = getOpenings(key);
+
+    for (const dir of openings) {
+      const neighbor = getNeighborForDirection(key, dir);
+
+      if (neighbor === null || neighbor < 0 || neighbor >= TOTAL_PIPES) {
+        return true;
+      }
+
+      const neighborPipe = pipes[neighbor];
+
+      if (!neighborPipe) {
+        return true;
+      }
+
+      const neighborOpenings = getOpenings(neighbor);
+
+      if (!neighborOpenings.includes(opposite[dir])) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
 
 function evaluatePath() {
@@ -1862,7 +1902,7 @@ function evaluatePath() {
     }
   });
 
-  if (result.valid) {
+  if (result.valid && result.reachedGoal && !hasOpenEnds(result.pathCells)) {
     return { success: true, previewPath };
   }
 
@@ -1961,6 +2001,12 @@ function loseRound() {
 
 function playerWins(path) {
   if (!gameStarted) return;
+
+  const result = validateAllConnections();
+  if (!result.valid || !result.reachedGoal || hasOpenEnds(result.pathCells)) {
+    console.log("There are leaking pipes.");
+    return;
+  }
 
   gameStarted = false;
   updateScore(100);
