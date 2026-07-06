@@ -1397,6 +1397,7 @@ body.nav-collapsed .expandHeaderBtn{
     gap:6px;
     padding:10px;
     border-radius:22px;
+    overflow:visible;
   }
 
   .landmark-pin{
@@ -1410,8 +1411,12 @@ body.nav-collapsed .expandHeaderBtn{
   }
 
   #pipesLayer::after{
+    left:auto;
     right:14px;
-    bottom:14px;
+    bottom:-14px;
+    transform:none;
+    font-size:.62rem;
+    padding:4px 9px;
   }
 
 
@@ -1425,10 +1430,36 @@ body.nav-collapsed .expandHeaderBtn{
 
   #factPopup{
     top:auto;
-    right:12px;
-    bottom:12px;
     left:12px;
+    right:12px;
+    bottom:calc(148px + env(safe-area-inset-bottom));
     width:auto;
+    z-index:13;
+  }
+
+  #infoPopup{
+    top:auto;
+    left:12px;
+    right:12px;
+    bottom:calc(148px + env(safe-area-inset-bottom));
+    inset:auto 12px calc(148px + env(safe-area-inset-bottom)) 12px;
+    z-index:14;
+    align-items:flex-end;
+    justify-content:center;
+    padding:0;
+    background:transparent;
+    backdrop-filter:none;
+  }
+
+  #infoPopup .popup,
+  #factPopup .popup{
+    width:100%;
+    max-height:38vh;
+    margin:0;
+    overflow:auto;
+    border-radius:16px;
+    padding:14px;
+    text-align:left;
   }
 }
 
@@ -1513,11 +1544,19 @@ body.nav-collapsed .expandHeaderBtn{
     gap:5px;
     padding:8px;
     border-radius:18px;
+    overflow:visible;
   }
 
   .pipe{
     border-radius:13px;
     background-size:66%;
+  }
+
+  #pipesLayer::after{
+    left:auto;
+    right:10px;
+    bottom:-12px;
+    transform:none;
   }
 
   .overlay-card,
@@ -1534,6 +1573,13 @@ body.nav-collapsed .expandHeaderBtn{
   .status-panel{
     bottom:10px;
     padding:12px 14px;
+  }
+
+  #infoPopup,
+  #factPopup{
+    left:10px;
+    right:10px;
+    bottom:calc(178px + env(safe-area-inset-bottom));
   }
 }
 
@@ -1554,6 +1600,14 @@ body.nav-collapsed .expandHeaderBtn{
   #pipesLayer{
     top:38%;
     width:min(100%, 308px);
+    overflow:visible;
+  }
+
+  #pipesLayer::after{
+    left:auto;
+    right:10px;
+    bottom:-12px;
+    transform:none;
   }
 
   #mapControlDock{
@@ -1579,6 +1633,13 @@ body.nav-collapsed .expandHeaderBtn{
     right:10px;
     bottom:calc(54px + env(safe-area-inset-bottom));
     max-height:50%;
+  }
+
+  #infoPopup,
+  #factPopup{
+    left:10px;
+    right:10px;
+    bottom:calc(188px + env(safe-area-inset-bottom));
   }
 }
 
@@ -1628,21 +1689,22 @@ body.nav-collapsed .expandHeaderBtn{
 /* Phone fix: keep stats visible but out of the board area */
 @media screen and (hover:none) and (pointer:coarse) and (max-width:560px){
   #gameMap{
-    padding-top:82px;
+    padding-top:126px;
   }
 
   #topBar{
-    position:relative;
-    top:auto;
-    left:auto;
+    position:absolute;
+    top:8px;
+    left:8px;
+    right:8px;
     transform:none;
-    width:100%;
+    width:auto;
     max-width:none;
     display:flex;
     gap:6px;
     overflow-x:auto;
     overflow-y:hidden;
-    padding:0 2px 2px;
+    padding:0 0 2px;
     z-index:10;
     scrollbar-width:none;
   }
@@ -1670,6 +1732,22 @@ body.nav-collapsed .expandHeaderBtn{
 
   #pipesLayer{
     top:46%;
+  }
+
+  .status-panel{
+    top:62px;
+    right:8px;
+    left:8px;
+    bottom:auto;
+    max-width:none;
+    padding:10px 12px;
+    border-radius:14px;
+    z-index:10;
+  }
+
+  #message{
+    font-size:.9rem;
+    line-height:1.3;
   }
 }
 

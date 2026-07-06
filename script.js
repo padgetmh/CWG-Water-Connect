@@ -658,12 +658,8 @@ const finalMoves = document.getElementById("finalMoves");
 const sourceNode = document.querySelector(".source") || document.getElementById("source");
 const villageNode = document.querySelector(".village") || document.getElementById("village");
 
-const startBtn = document.getElementById("startBtn");
-const doneBtn = document.getElementById("doneBtn");
 const pauseBtn = document.getElementById("pauseBtn");
 const playBtn = document.getElementById("playBtn");
-const overlayStartBtn = document.getElementById("overlayStartBtn");
-const resetBtn = document.getElementById("resetBtn");
 const nextLevelBtn = document.getElementById("nextLevel");
 const retryBtn = document.getElementById("retryBtn");
 const closeInfoBtn = document.getElementById("closeInfoBtn");
@@ -1652,47 +1648,6 @@ function isAlignedConnection(a, b) {
   return openingsA.includes(directionAB) && openingsB.includes(directionBA);
 }
 
-function pipesConnect(a, b, ctx) {
-  if (!isAlignedConnection(a, b)) {
-    return false;
-  }
-
-  if (contaminatedPipes.includes(a) || contaminatedPipes.includes(b)) {
-    if (!ctx.penaltyApplied) {
-      updateScore(-10);
-      showBottomBanner("Dirty water reached the system!");
-      if (contaminatedPipes.includes(a)) {
-        markContamination(a);
-      }
-      if (contaminatedPipes.includes(b)) {
-        markContamination(b);
-      }
-      ctx.penaltyApplied = true;
-    }
-
-    return false;
-  }
-
-  return true;
-}
-
-function pathUsesContaminatedBranch(index, ctx) {
-  const neighbors = getNeighbors(index);
-
-  for (const neighbor of neighbors) {
-    if (!contaminatedPipes.includes(neighbor)) {
-      continue;
-    }
-
-    pipesConnect(index, neighbor, ctx);
-    if (ctx.penaltyApplied) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 function getNeighborForDirection(index, direction) {
   if (direction === "top") return index - GRID_SIZE;
   if (direction === "bottom") return index + GRID_SIZE;
@@ -1739,7 +1694,8 @@ function validateAllConnections() {
         const isVillageOutlet = index === END_PIPE && direction === "right";
 
         if (!isSourceOutlet && !isVillageOutlet) {
-          continue;
+          logInvalidConnection(index, direction, "This opening leaks out of the map.");
+          return { valid: false, reason: "There is a leak in the pipeline." };
         }
 
         continue;
@@ -1747,17 +1703,20 @@ function validateAllConnections() {
 
       const neighbor = getNeighborForDirection(index, direction);
       if (neighbor === null || neighbor < 0 || neighbor >= TOTAL_PIPES) {
-        continue;
+        logInvalidConnection(index, direction, "Connection points to an invalid pipe location.");
+        return { valid: false, reason: "There is a leak in the pipeline." };
       }
 
       if (contaminatedPipes.includes(neighbor)) {
-        continue;
+        markContamination(neighbor);
+        return { valid: false, reason: "There is a leak into contaminated water." };
       }
 
       const opposite = oppositeDirection[direction];
       const neighborOpenings = getOpenings(neighbor);
       if (!neighborOpenings.includes(opposite)) {
-        continue;
+        logInvalidConnection(index, direction, "Neighbor does not connect back.", neighbor);
+        return { valid: false, reason: "There is a leak in the pipeline." };
       }
 
       if (!visited.has(neighbor)) {
@@ -1907,7 +1866,7 @@ function loseRound() {
   showLoseScreen();
 }
 
-function playerWins(path) {
+function playerWins() {
   if (!gameStarted) return;
 
   const result = validateAllConnections();
@@ -2222,7 +2181,7 @@ document.addEventListener("flowSuccess", (event) => {
   if (Array.isArray(path) && path.length > 0) {
     animateWater(path);
   }
-  playerWins(path);
+  playerWins();
 });
 
 document.addEventListener("flowFail", () => {
