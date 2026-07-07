@@ -1832,7 +1832,7 @@ function evaluatePath() {
     }
   });
 
-  if ((result.valid && result.reachedGoal) || fallbackPath) {
+  if (result.valid && result.reachedGoal) {
     return { success: true, previewPath };
   }
 
@@ -1933,10 +1933,7 @@ function playerWins(resolvedPath = null) {
   if (!gameStarted) return;
 
   const result = validateAllConnections();
-  const fallbackPath = Array.isArray(resolvedPath) && resolvedPath.length > 0
-    ? resolvedPath
-    : findConnectedPathToGoal();
-  const didReachGoal = (result.valid && result.reachedGoal) || Array.isArray(fallbackPath);
+  const didReachGoal = result.valid && result.reachedGoal;
 
   if (!didReachGoal) {
     console.log("There are leaking pipes.");
