@@ -1599,29 +1599,6 @@ function getOpenings(index) {
   return shape[quarterTurns] || shape[0];
 }
 
-function getPipeCoordinate(index) {
-  return {
-    x: index % GRID_SIZE,
-    y: Math.floor(index / GRID_SIZE)
-  };
-}
-
-function logInvalidConnection(index, direction, message, neighbor = null) {
-  const pipeCoordinate = getPipeCoordinate(index);
-  const directionLabel = direction.toUpperCase();
-
-  console.log("Invalid connection:");
-  console.log(`Pipe (${pipeCoordinate.x},${pipeCoordinate.y}) has an open ${directionLabel} connection.`);
-
-  if (typeof neighbor === "number") {
-    const neighborCoordinate = getPipeCoordinate(neighbor);
-    console.log(`Neighbor (${neighborCoordinate.x},${neighborCoordinate.y}) ${message}`);
-    return;
-  }
-
-  console.log(message);
-}
-
 function markContamination(index) {
   const pipe = pipes[index];
   pipe.classList.add("busted");
@@ -1659,106 +1636,6 @@ function getNeighborForDirection(index, direction) {
   if (direction === "left") return index - 1;
   if (direction === "right") return index + 1;
   return null;
-}
-
-function isDirectionOutOfBounds(index, direction) {
-  const row = Math.floor(index / GRID_SIZE);
-  const col = index % GRID_SIZE;
-
-  if (direction === "top") return row === 0;
-  if (direction === "bottom") return row === GRID_SIZE - 1;
-  if (direction === "left") return col === 0;
-  if (direction === "right") return col === GRID_SIZE - 1;
-  return true;
-}
-
-function validateAllConnections() {
-  if (contaminatedPipes.includes(START_PIPE) || contaminatedPipes.includes(END_PIPE)) {
-    return { valid: false, reason: "Source or destination is contaminated." };
-  }
-
-  const startOpenings = getOpenings(START_PIPE);
-  if (!startOpenings.includes("left")) {
-    logInvalidConnection(START_PIPE, "left", "Source pipe must remain open to the water source.");
-    return { valid: false, reason: "Source pipe must be open to the water source." };
-  }
-
-  const visited = new Set([START_PIPE]);
-  const queue = [START_PIPE];
-  const parentMap = new Map();
-
-  while (queue.length > 0) {
-    const index = queue.shift();
-    const openings = getOpenings(index);
-
-    for (const direction of openings) {
-      const boundaryOpen = isDirectionOutOfBounds(index, direction);
-
-      if (boundaryOpen) {
-        const isSourceOutlet = index === START_PIPE && direction === "left";
-        const isVillageOutlet = index === END_PIPE && direction === "right";
-
-        if (!isSourceOutlet && !isVillageOutlet) {
-          logInvalidConnection(index, direction, "This opening leaks out of the map.");
-          return { valid: false, reason: "There is a leak in the pipeline." };
-        }
-
-        continue;
-      }
-
-      const neighbor = getNeighborForDirection(index, direction);
-      if (neighbor === null || neighbor < 0 || neighbor >= TOTAL_PIPES) {
-        logInvalidConnection(index, direction, "Connection points to an invalid pipe location.");
-        return { valid: false, reason: "There is a leak in the pipeline." };
-      }
-
-      if (contaminatedPipes.includes(neighbor)) {
-        markContamination(neighbor);
-        return { valid: false, reason: "There is a leak into contaminated water." };
-      }
-
-      const opposite = oppositeDirection[direction];
-      const neighborOpenings = getOpenings(neighbor);
-      if (!neighborOpenings.includes(opposite)) {
-        logInvalidConnection(index, direction, "Neighbor does not connect back.", neighbor);
-        return { valid: false, reason: "There is a leak in the pipeline." };
-      }
-
-      if (!visited.has(neighbor)) {
-        visited.add(neighbor);
-        parentMap.set(neighbor, index);
-        queue.push(neighbor);
-      }
-    }
-  }
-
-  if (!visited.has(END_PIPE)) {
-    return { valid: false, reason: "Water has not reached the village." };
-  }
-
-  const endOpenings = getOpenings(END_PIPE);
-  if (!endOpenings.includes("right")) {
-    logInvalidConnection(END_PIPE, "right", "Village pipe must remain open to receive water.");
-    return { valid: false, reason: "Village pipe must be open to receive water." };
-  }
-
-  const pathToDestination = [];
-  let current = END_PIPE;
-
-  while (typeof current === "number") {
-    pathToDestination.push(current);
-    current = parentMap.get(current);
-  }
-
-  pathToDestination.reverse();
-
-  return {
-    valid: true,
-    reachedGoal: true,
-    visited: Array.from(visited),
-    pathCells: pathToDestination,
-    path: pathToDestination
-  };
 }
 
 function findConnectedPathToGoal() {
@@ -1820,11 +1697,8 @@ function evaluatePath() {
   resetPipeClasses();
   resetMapHighlights();
 
-  const result = validateAllConnections();
-  const fallbackPath = findConnectedPathToGoal();
-  const previewPath = result.valid
-    ? result.path
-    : (fallbackPath || [...solutionPath]);
+  const connectedPath = findConnectedPathToGoal();
+  const previewPath = connectedPath || [...solutionPath];
 
   previewPath.forEach((index) => {
     if (!contaminatedPipes.includes(index)) {
@@ -1832,14 +1706,22 @@ function evaluatePath() {
     }
   });
 
-  if (result.valid && result.reachedGoal) {
+  if (connectedPath) {
     return { success: true, previewPath };
+  }
+
+  if (previewPath.some((index) => contaminatedPipes.includes(index))) {
+    previewPath.forEach((index) => {
+      if (contaminatedPipes.includes(index)) {
+        markContamination(index);
+      }
+    });
   }
 
   return {
     success: false,
     previewPath,
-    reason: result.reason
+    reason: "Path is not complete. Make sure pipes connect from source to village."
   };
 }
 
@@ -1852,7 +1734,7 @@ function animateWater(path) {
     setTimeout(() => {
       pipes[index].classList.remove("path-preview");
       pipes[index].classList.add("watered");
-      if (index === path.length - 1 && villageNode) {
+      if (order === path.length - 1 && villageNode) {
         villageNode.classList.add("village-watered");
       }
     }, order * 160);
@@ -1932,11 +1814,12 @@ function loseRound() {
 function playerWins(resolvedPath = null) {
   if (!gameStarted) return;
 
-  const result = validateAllConnections();
-  const didReachGoal = result.valid && result.reachedGoal;
+  const didReachGoal = Array.isArray(resolvedPath) && resolvedPath.length > 0
+    ? true
+    : Boolean(findConnectedPathToGoal());
 
   if (!didReachGoal) {
-    console.log("There are leaking pipes.");
+    console.log("There is no complete source-to-village path yet.");
     return;
   }
 
