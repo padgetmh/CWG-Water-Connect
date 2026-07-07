@@ -838,6 +838,11 @@ let contaminationAlertIndex = 0;
 let didYouKnowIndex = 0;
 let factPopupTimeout = null;
 
+function syncViewportHeightVar() {
+  const viewportHeight = window.visualViewport?.height || window.innerHeight;
+  document.documentElement.style.setProperty("--app-vh", `${viewportHeight * 0.01}px`);
+}
+
 function setNavigationCollapsed(collapsed) {
   navCollapsed = collapsed;
   document.body.classList.toggle("nav-collapsed", collapsed);
@@ -1756,12 +1761,70 @@ function validateAllConnections() {
   };
 }
 
+function findConnectedPathToGoal() {
+  if (contaminatedPipes.includes(START_PIPE) || contaminatedPipes.includes(END_PIPE)) {
+    return null;
+  }
+
+  const startOpenings = getOpenings(START_PIPE);
+  const endOpenings = getOpenings(END_PIPE);
+
+  if (!startOpenings.includes("left") || !endOpenings.includes("right")) {
+    return null;
+  }
+
+  const visited = new Set([START_PIPE]);
+  const queue = [START_PIPE];
+  const parentMap = new Map();
+
+  while (queue.length > 0) {
+    const index = queue.shift();
+
+    if (index === END_PIPE) {
+      break;
+    }
+
+    const neighbors = getNeighbors(index);
+    for (const neighbor of neighbors) {
+      if (visited.has(neighbor) || contaminatedPipes.includes(neighbor)) {
+        continue;
+      }
+
+      if (!isAlignedConnection(index, neighbor)) {
+        continue;
+      }
+
+      visited.add(neighbor);
+      parentMap.set(neighbor, index);
+      queue.push(neighbor);
+    }
+  }
+
+  if (!visited.has(END_PIPE)) {
+    return null;
+  }
+
+  const path = [];
+  let current = END_PIPE;
+
+  while (typeof current === "number") {
+    path.push(current);
+    current = parentMap.get(current);
+  }
+
+  path.reverse();
+  return path.length > 0 ? path : null;
+}
+
 function evaluatePath() {
   resetPipeClasses();
   resetMapHighlights();
 
   const result = validateAllConnections();
-  const previewPath = result.valid ? result.path : [...solutionPath];
+  const fallbackPath = findConnectedPathToGoal();
+  const previewPath = result.valid
+    ? result.path
+    : (fallbackPath || [...solutionPath]);
 
   previewPath.forEach((index) => {
     if (!contaminatedPipes.includes(index)) {
@@ -1769,7 +1832,7 @@ function evaluatePath() {
     }
   });
 
-  if (result.valid && result.reachedGoal) {
+  if ((result.valid && result.reachedGoal) || fallbackPath) {
     return { success: true, previewPath };
   }
 
@@ -1866,11 +1929,16 @@ function loseRound() {
   showLoseScreen();
 }
 
-function playerWins() {
+function playerWins(resolvedPath = null) {
   if (!gameStarted) return;
 
   const result = validateAllConnections();
-  if (!result.valid || !result.reachedGoal) {
+  const fallbackPath = Array.isArray(resolvedPath) && resolvedPath.length > 0
+    ? resolvedPath
+    : findConnectedPathToGoal();
+  const didReachGoal = (result.valid && result.reachedGoal) || Array.isArray(fallbackPath);
+
+  if (!didReachGoal) {
     console.log("There are leaking pipes.");
     return;
   }
@@ -2181,7 +2249,7 @@ document.addEventListener("flowSuccess", (event) => {
   if (Array.isArray(path) && path.length > 0) {
     animateWater(path);
   }
-  playerWins();
+  playerWins(path);
 });
 
 document.addEventListener("flowFail", () => {
@@ -2208,3 +2276,7 @@ if (document.readyState === "loading") {
 } else {
   bootGameUI();
 }
+
+syncViewportHeightVar();
+window.addEventListener("resize", syncViewportHeightVar);
+window.visualViewport?.addEventListener("resize", syncViewportHeightVar);
