@@ -790,6 +790,7 @@ const pipeShapes = {
 };
 
 const DEFAULT_ROTATIONS = [0, 90, 180, 270];
+const PIPE_CLICK_SUPPRESSION_MS = 450;
 const pipes = [];
 const rotations = new Array(TOTAL_PIPES).fill(0);
 const CONTAMINATION_ALERTS = [
@@ -1525,7 +1526,15 @@ function createBoard() {
 
     pipe.dataset.index = String(index);
     pipe.setAttribute("aria-label", `Rotate pipe ${index + 1}`);
-    pipe.addEventListener("click", rotatePipe);
+
+    if (window.PointerEvent) {
+      pipe.addEventListener("pointerdown", handlePipePointerDown);
+    } else {
+      pipe.addEventListener("touchstart", handlePipeTouchStart, { passive: false });
+    }
+
+    // Keep click for keyboard activation and fallback browsers.
+    pipe.addEventListener("click", handlePipeClick);
 
     pipesLayer.appendChild(pipe);
     pipes.push(pipe);
@@ -1594,9 +1603,36 @@ function getDirectionBetween(a, b) {
 
 function getOpenings(index) {
   const type = pipeLayout[index].type;
-  const quarterTurns = (rotations[index] / 90) % 4;
+  const normalizedRotation = ((Number(rotations[index]) % 360) + 360) % 360;
+  const quarterTurns = Math.round(normalizedRotation / 90) % 4;
   const shape = pipeShapes[type] || pipeShapes.straight;
   return shape[quarterTurns] || shape[0];
+}
+
+function handlePipePointerDown(event) {
+  if (event.pointerType === "mouse" && event.button !== 0) {
+    return;
+  }
+
+  const pipe = event.currentTarget;
+  pipe.dataset.lastPointerDownAt = String(Date.now());
+  rotatePipe(event);
+}
+
+function handlePipeTouchStart(event) {
+  event.preventDefault();
+  rotatePipe(event);
+}
+
+function handlePipeClick(event) {
+  const pipe = event.currentTarget;
+  const lastPointerDownAt = Number(pipe.dataset.lastPointerDownAt || 0);
+
+  if (lastPointerDownAt > 0 && Date.now() - lastPointerDownAt < PIPE_CLICK_SUPPRESSION_MS) {
+    return;
+  }
+
+  rotatePipe(event);
 }
 
 function markContamination(index) {
